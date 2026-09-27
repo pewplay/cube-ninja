@@ -1,8 +1,15 @@
 {
+  "$schema": "https://raw.githubusercontent.com/pewplay/pewplay/main/schema/game.schema.json",
   "title": "Cube Ninja",
   "description": "Slice through the obstacles and test your ninja skills in this arcade game.",
-  "keywords": ["ninja", "slice", "arcade", "action", "cube"],
   "category": "Action",
+  "tags": [
+    "ninja",
+    "slice",
+    "arcade",
+    "action",
+    "cube"
+  ],
   "author": "PewPlay",
   "playMode": "SinglePlayer"
 }
