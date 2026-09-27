@@ -143,7 +143,7 @@ const isPaused = () => state.menus.active === MENU_PAUSE;
 // Local Storage //
 ///////////////////
 
-const highScoreKey = '__menja__highScore';
+const highScoreKey = 'cube-ninja:highScore';
 const getHighScore = () => {
 	const raw = localStorage.getItem(highScoreKey);
 	return raw ? parseInt(raw, 10) : 0;

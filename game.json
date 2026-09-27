@@ -2,6 +2,32 @@
   "$schema": "https://raw.githubusercontent.com/pewplay/pewplay/main/schema/game.schema.json",
   "title": "Cube Ninja",
   "description": "Slice through the obstacles and test your ninja skills in this arcade game.",
+  "about": "Cube Ninja is a browser game where you start a round and slice the moving targets while avoiding mistakes. Use the on-screen menu to replay.\n\nStart a round in your browser and use the controls below to play.",
+  "howToPlay": "Start a round and slice the moving targets while avoiding mistakes. Use the on-screen menu to replay.",
+  "controls": [
+    {
+      "input": "Mouse / touch",
+      "action": "Aim and slice"
+    },
+    {
+      "input": "P",
+      "action": "Pause or resume"
+    }
+  ],
+  "tips": [
+    "Use mouse / touch to aim and slice.",
+    "Try another round to practice the timing and strategy."
+  ],
+  "faq": [
+    {
+      "question": "How do I play Cube Ninja?",
+      "answer": "Start a round and slice the moving targets while avoiding mistakes. Use the on-screen menu to replay."
+    },
+    {
+      "question": "Can I play Cube Ninja in a browser?",
+      "answer": "Yes. Open the game page and play without installing an app."
+    }
+  ],
   "category": "Action",
   "tags": [
     "ninja",
@@ -10,6 +36,9 @@
     "action",
     "cube"
   ],
-  "author": "PewPlay",
-  "playMode": "SinglePlayer"
+  "playMode": "SinglePlayer",
+  "orientation": "any",
+  "cover": "cover.png",
+  "draft": true,
+  "author": "PewPlay"
 }
