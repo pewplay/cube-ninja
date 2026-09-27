@@ -1,8 +1,58 @@
 {
+  "$schema": "https://raw.githubusercontent.com/pewplay/pewplay/main/schema/game.schema.json",
   "title": "Cube Ninja",
-  "description": "Slice through the obstacles and test your ninja skills in this arcade game.",
-  "keywords": ["ninja", "slice", "arcade", "action", "cube"],
-  "category": "Action",
+  "description": "Swipe to smash colorful 3D cubes before they fall off the screen, trigger slow-mo and chase a new high score in this free browser game.",
+  "about": "Cube Ninja is a slick 3D slicing game: cubes are tossed up from the bottom of the screen and you swipe through them to smash them into a shower of fragments. Every clean hit scores points, and the satisfying bursts make each swing feel great.\n\nAs your count of smashed cubes grows, the game throws new tricks at you. Wireframe cubes trigger a short slow-motion window, pink armored cubes need three hits, and spinning cubes join the mix while cubes arrive faster and faster. In Play Game mode a single missed cube ends the run, while Casual Mode lets you keep going and only costs you points.\n\nIt is a great pick for quick reflex sessions on a phone, tablet or computer, and your best score is saved so you always have a record to beat.",
+  "howToPlay": "Swipe with your finger or drag with the mouse across the cubes to smash them; each hit is worth 10 points. In Play Game mode the run ends as soon as a cube falls off the bottom of the screen. In Casual Mode you never lose, but every missed cube costs 25 points. Smash a wireframe cube to slow time down for a moment.",
+  "controls": [
+    {
+      "input": "Drag / Swipe",
+      "action": "Slice through cubes"
+    },
+    {
+      "input": "Click / Tap",
+      "action": "Choose menu options"
+    },
+    {
+      "input": "P",
+      "action": "Pause / resume"
+    }
+  ],
+  "tips": [
+    "Slice fast: slow drags do not count as hits, so use quick, decisive swipes.",
+    "Pink armored cubes take three hits, so keep swiping through them until they shatter.",
+    "During slow-mo, keep your finger or mouse button down to slow time even further.",
+    "Watch the edges of the screen, where cubes are easy to miss when several appear at once."
+  ],
+  "faq": [
+    {
+      "question": "Is Cube Ninja free to play?",
+      "answer": "Yes. Cube Ninja is completely free and runs in your browser with no download or sign-up."
+    },
+    {
+      "question": "Can I play Cube Ninja on a phone or tablet?",
+      "answer": "Yes. Just swipe across the cubes with your finger; the game adapts to the size of your screen."
+    },
+    {
+      "question": "What is the difference between Play Game and Casual Mode?",
+      "answer": "In Play Game a missed cube ends the run and your best score is saved on this device. Casual Mode never ends and only takes away 25 points for each missed cube."
+    }
+  ],
+  "category": "Arcade",
+  "tags": [
+    "slice",
+    "swipe",
+    "3d",
+    "reflex",
+    "ninja"
+  ],
   "author": "PewPlay",
-  "playMode": "SinglePlayer"
+  "playMode": "SinglePlayer",
+  "orientation": "any",
+  "cover": "cover.png",
+  "screenshots": [
+    "screenshots/1.png",
+    "screenshots/2.png",
+    "screenshots/3.png"
+  ]
 }
