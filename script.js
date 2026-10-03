@@ -34,8 +34,11 @@ let pointerIsDown = false;
 let pointerScreen = { x: 0, y: 0 };
 // Same as `pointerScreen`, but converted to scene coordinates in rAF.
 let pointerScene = { x: 0, y: 0 };
-// Minimum speed of pointer before "hits" are counted.
-const minPointerSpeed = 50;
+// Minimum speed of pointer (scene units per 60fps frame) before "hits" are counted.
+// The base value suits large screens; on small (phone) screens it is lowered in setupCanvases()
+// so a natural finger swipe across a short screen still counts as a slice.
+const baseMinPointerSpeed = 50;
+let minPointerSpeed = baseMinPointerSpeed;
 // The hit speed affects the direction the target post-hit. This number dampens that force.
 const hitDampening = 0.1;
 // Backboard receives shadows and is the farthest negative Z position of entities.
@@ -143,16 +146,27 @@ const isPaused = () => state.menus.active === MENU_PAUSE;
 // Local Storage //
 ///////////////////
 
-const highScoreKey = '__menja__highScore';
+// All keys are prefixed with the game slug (the arcade shares one origin between games).
+const highScoreKey = 'cube-ninja:highScore';
+
+const storageGet = key => {
+	try { return window.localStorage.getItem(key); } catch (e) { return null; }
+};
+const storageSet = (key, value) => {
+	try { window.localStorage.setItem(key, value); } catch (e) { /* storage unavailable */ }
+};
+
+let _memoryHighScore = 0;
 const getHighScore = () => {
-	const raw = localStorage.getItem(highScoreKey);
-	return raw ? parseInt(raw, 10) : 0;
+	const raw = parseInt(storageGet(highScoreKey), 10);
+	return Math.max(raw > 0 ? raw : 0, _memoryHighScore);
 };
 
 let _lastHighscore = getHighScore();
 const setHighScore = score => {
 	_lastHighscore = getHighScore();
-	localStorage.setItem(highScoreKey, String(score));
+	_memoryHighScore = Math.max(_memoryHighScore, score);
+	storageSet(highScoreKey, String(score));
 };
 
 const isNewHighScore = () => state.game.score > _lastHighscore;
@@ -177,8 +191,10 @@ const invariant = (condition, message) => {
 const $ = selector => document.querySelector(selector);
 const handleClick = (element, handler) => element.addEventListener('click', handler);
 const handlePointerDown = (element, handler) => {
-	element.addEventListener('touchstart', handler);
-	element.addEventListener('mousedown', handler);
+	element.addEventListener('pointerdown', event => {
+		event.stopPropagation();
+		handler(event);
+	});
 };
 
 
@@ -188,7 +204,7 @@ const handlePointerDown = (element, handler) => {
 ////////////////////////
 
 // Converts a number into a formatted string with thousand separators.
-const formatNumber = num => num.toLocaleString();
+const formatNumber = num => num.toLocaleString('en-US');
 
 
 
@@ -1241,11 +1257,11 @@ function renderScoreHud() {
 		scoreNode.style.display = 'none';
 		cubeCountNode.style.opacity = 1;
 	} else {
-		scoreNode.innerText = `SCORE: ${state.game.score}`;
+		scoreNode.textContent = `SCORE: ${formatNumber(state.game.score)}`;
 		scoreNode.style.display = 'block';
 		cubeCountNode.style.opacity = 0.65 ;
 	}
-	cubeCountNode.innerText = `CUBES SMASHED: ${state.game.cubeCount}`;
+	cubeCountNode.textContent = `CUBES SMASHED: ${formatNumber(state.game.cubeCount)}`;
 }
 
 renderScoreHud();
@@ -1285,6 +1301,7 @@ const menuPauseNode = $('.menu--pause');
 const menuScoreNode = $('.menu--score');
 
 const finalScoreLblNode = $('.final-score-lbl');
+const mainHighScoreLblNode = $('.main-high-score-lbl');
 const highScoreLblNode = $('.high-score-lbl');
 
 
@@ -1303,8 +1320,11 @@ function renderMenus() {
 	hideMenu(menuScoreNode);
 
 	switch (state.menus.active) {
-		case MENU_MAIN:
+		case MENU_MAIN: {
+			const best = getHighScore();
+			mainHighScoreLblNode.textContent = best > 0 ? `Best: ${formatNumber(best)}` : '';
 			showMenu(menuMainNode);
+		}
 			break;
 		case MENU_PAUSE:
 			showMenu(menuPauseNode);
@@ -1357,39 +1377,6 @@ handleClick($('.play-again-btn'), () => {
 });
 
 handleClick($('.menu-btn--score'), () => setActiveMenu(MENU_MAIN));
-
-
-
-
-////////////////////
-// Button Actions //
-////////////////////
-
-// Main Menu
-handleClick($('.play-normal-btn'), () => {
-	setGameMode(GAME_MODE_RANKED);
-	setActiveMenu(null);
-	resetGame();
-});
-
-handleClick($('.play-casual-btn'), () => {
-	setGameMode(GAME_MODE_CASUAL);
-	setActiveMenu(null);
-	resetGame();
-});
-
-// Pause Menu
-handleClick($('.resume-btn'), () => resumeGame());
-handleClick($('.menu-btn--pause'), () => setActiveMenu(MENU_MAIN));
-
-// Score Menu
-handleClick($('.play-again-btn'), () => {
-	setActiveMenu(null);
-	resetGame();
-});
-
-handleClick($('.menu-btn--score'), () => setActiveMenu(MENU_MAIN));
-
 
 
 
@@ -1480,10 +1467,24 @@ function endGame() {
 ////////////////////////
 
 window.addEventListener('keydown', event => {
-	if (event.key === 'p') {
+	if (event.repeat) return;
+	const key = event.key;
+	if (key === 'p' || key === 'P' || key === 'Escape') {
+		event.preventDefault();
 		isPaused() ? resumeGame() : pauseGame();
 	}
 });
+
+// Pause automatically when the page/tab is hidden or the frame loses focus mid-game.
+function autoPause() {
+	activePointerId = null;
+	handleCanvasPointerUp();
+	pauseGame();
+}
+document.addEventListener('visibilitychange', () => {
+	if (document.hidden) autoPause();
+});
+window.addEventListener('pagehide', autoPause);
 
 
 
@@ -1544,7 +1545,8 @@ function tick(width, height, simTime, simSpeed, lag) {
 	//  - Lag won't create large spikes in speed/deltas
 	//  - In slow mo, speed is increased proportionately to match "reality". Without this boost,
 	//    it feels like your actions are dampened in slow mo.
-	const forceMultiplier = 1 / (simSpeed * 0.75 + 0.25);
+	// Velocities are normalised to a 60fps frame so hits register the same on 120Hz screens.
+	const forceMultiplier = 1 / (gameSpeed * 0.75 + 0.25) / Math.max(lag, 0.25);
 	pointerDelta.x = 0;
 	pointerDelta.y = 0;
 	pointerDeltaScaled.x = 0;
@@ -1595,7 +1597,7 @@ function tick(width, height, simTime, simSpeed, lag) {
 		target.y = centerY + targetHitRadius * 2;
 		target.z = (Math.random() * targetRadius*2 - targetRadius);
 		target.xD = Math.random() * (target.x * -2 / 120);
-		target.yD = -20;
+		target.yD = -20 * Math.sqrt(height / 1000);
 		targets.push(target);
 	}
 
@@ -2010,29 +2012,41 @@ function draw(ctx, width, height, viewScale) {
 
 function setupCanvases() {
 	const ctx = canvas.getContext('2d');
-	// devicePixelRatio alias
-	const dpr = window.devicePixelRatio || 1;
+	// devicePixelRatio (re-read on every resize: it changes with zoom or when moving between screens)
+	let dpr = 1;
 	// View will be scaled so objects appear sized similarly on all screen sizes.
 	let viewScale;
 	// Dimensions (taking viewScale into account!)
 	let width, height;
 
 	function handleResize() {
-		const w = window.innerWidth;
-		const h = window.innerHeight;
-		viewScale = h / 1000;
+		const w = Math.max(1, canvas.clientWidth || window.innerWidth);
+		const h = Math.max(1, canvas.clientHeight || window.innerHeight);
+		dpr = Math.min(window.devicePixelRatio || 1, 3);
+		// The scene is ~1000 units tall. On narrow (portrait) screens it grows taller so it is at
+		// least ~520 units wide, and on very short (landscape phone) screens it gets a little shorter
+		// so cubes stay big enough to hit. Cube launch speed adapts to the scene height (see tick).
+		viewScale = Math.min(h / 1000, w / 520);
+		if (h < 600) viewScale = Math.max(viewScale, Math.min(h / 750, w / 520));
 		width = w / viewScale;
 		height = h / viewScale;
-		canvas.width = w * dpr;
-		canvas.height = h * dpr;
-		canvas.style.width = w + 'px';
-		canvas.style.height = h + 'px';
+		minPointerSpeed = baseMinPointerSpeed * Math.min(1, Math.max(0.45, Math.min(w, h) / 800));
+		const cw = Math.round(w * dpr);
+		const ch = Math.round(h * dpr);
+		if (canvas.width !== cw || canvas.height !== ch) {
+			canvas.width = cw;
+			canvas.height = ch;
+		}
 	}
 
 	// Set initial size
 	handleResize();
-	// resize fullscreen canvas
+	// Resize the fullscreen canvas on window resize, orientation change and container changes.
 	window.addEventListener('resize', handleResize);
+	window.addEventListener('orientationchange', () => setTimeout(handleResize, 100));
+	if ('ResizeObserver' in window) {
+		new ResizeObserver(handleResize).observe(canvas);
+	}
 
 
 	// Run game loop
@@ -2074,7 +2088,8 @@ function setupCanvases() {
 		// Auto scale drawing for high res displays, and incorporate `viewScale`.
 		// Also shift canvas so (0, 0) is the middle of the screen.
 		// This just works with 3D perspective projection.
-		const drawScale = dpr * viewScale;
+		const drawScale = (canvas.width / (width * viewScale)) * viewScale;
+		ctx.setTransform(1, 0, 0, 1, 0, 0);
 		ctx.scale(drawScale, drawScale);
 		ctx.translate(halfW, halfH);
 		draw(ctx, width, height, viewScale);
@@ -2128,51 +2143,49 @@ function handleCanvasPointerMove(x, y) {
 }
 
 
-// Use pointer events if available, otherwise fallback to touch events (for iOS).
-if ('PointerEvent' in window) {
-	canvas.addEventListener('pointerdown', event => {
-		event.isPrimary && handleCanvasPointerDown(event.clientX, event.clientY);
-	});
+// Pointer Events cover mouse, touch and pen. Only one pointer slices at a time; it is captured so
+// a swipe keeps working even when it passes over the HUD or leaves the canvas.
+let activePointerId = null;
 
-	canvas.addEventListener('pointerup', event => {
-		event.isPrimary && handleCanvasPointerUp();
-	});
-
-	canvas.addEventListener('pointermove', event => {
-		event.isPrimary && handleCanvasPointerMove(event.clientX, event.clientY);
-	});
-	// We also need to know if the mouse leaves the page. For this game, it's best if that
-	// cancels a swipe, so essentially acts as a "mouseup" event.
-	document.body.addEventListener('mouseleave', handleCanvasPointerUp);
-} else {
-	let activeTouchId = null;
-	canvas.addEventListener('touchstart', event => {
-		if (!pointerIsDown) {
-			const touch = event.changedTouches[0];
-			activeTouchId = touch.identifier;
-      handleCanvasPointerDown(touch.clientX, touch.clientY);
-
-			
-		}
-	});
-	canvas.addEventListener('touchend', event => {
-		for (let touch of event.changedTouches) {
-			if (touch.identifier === activeTouchId) {
-				handleCanvasPointerUp();
-				break;
-			}
-		}
-	});
-	canvas.addEventListener('touchmove', event => {
-		for (let touch of event.changedTouches) {
-			if (touch.identifier === activeTouchId) {
-				handleCanvasPointerMove(touch.clientX, touch.clientY);
-				event.preventDefault();
-				break;
-			}
-		}
-	}, { passive: false });
+function canvasPoint(event) {
+	const rect = canvas.getBoundingClientRect();
+	return { x: event.clientX - rect.left, y: event.clientY - rect.top };
 }
+
+canvas.addEventListener('pointerdown', event => {
+	if (event.pointerType === 'mouse' && event.button !== 0) return;
+	if (activePointerId !== null) return;
+	event.preventDefault();
+	activePointerId = event.pointerId;
+	try { canvas.setPointerCapture(event.pointerId); } catch (e) { /* ignore */ }
+	const p = canvasPoint(event);
+	handleCanvasPointerDown(p.x, p.y);
+});
+
+canvas.addEventListener('pointermove', event => {
+	if (event.pointerId !== activePointerId) return;
+	event.preventDefault();
+	const p = canvasPoint(event);
+	handleCanvasPointerMove(p.x, p.y);
+});
+
+function endActivePointer(event) {
+	if (event.pointerId !== activePointerId) return;
+	activePointerId = null;
+	handleCanvasPointerUp();
+}
+canvas.addEventListener('pointerup', endActivePointer);
+canvas.addEventListener('pointercancel', endActivePointer);
+canvas.addEventListener('lostpointercapture', endActivePointer);
+
+// The whole page is a game surface: no context menu, selection or native drag.
+document.addEventListener('contextmenu', event => event.preventDefault());
+document.addEventListener('selectstart', event => event.preventDefault());
+document.addEventListener('dragstart', event => event.preventDefault());
+window.addEventListener('blur', () => {
+	activePointerId = null;
+	handleCanvasPointerUp();
+});
 
 
 

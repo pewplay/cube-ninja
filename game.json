@@ -3,23 +3,23 @@
   "title": "Cube Ninja",
   "description": "Swipe to smash colorful 3D cubes before they fall off the screen, trigger slow-mo and chase a new high score in this free browser game.",
   "about": "Cube Ninja is a slick 3D slicing game: cubes are tossed up from the bottom of the screen and you swipe through them to smash them into a shower of fragments. Every clean hit scores points, and the satisfying bursts make each swing feel great.\n\nAs your count of smashed cubes grows, the game throws new tricks at you. Wireframe cubes trigger a short slow-motion window, pink armored cubes need three hits, and spinning cubes join the mix while cubes arrive faster and faster. In Play Game mode a single missed cube ends the run, while Casual Mode lets you keep going and only costs you points.\n\nIt is a great pick for quick reflex sessions on a phone, tablet or computer, and your best score is saved so you always have a record to beat.",
-  "howToPlay": "Swipe with your finger or drag with the mouse across the cubes to smash them; each hit is worth 10 points. In Play Game mode the run ends as soon as a cube falls off the bottom of the screen. In Casual Mode you never lose, but every missed cube costs 25 points. Smash a wireframe cube to slow time down for a moment.",
+  "howToPlay": "Swipe with your finger or drag with the mouse across the cubes to smash them. A quick, decisive slice is worth 10 points; a slow drag only nudges a cube for 5 points. In Play Game mode the run ends as soon as a cube falls off the bottom of the screen. In Casual Mode you never lose, but every missed cube costs 25 points. Smash a wireframe cube to slow time down for a moment. Use the pause button, P or Esc to pause.",
   "controls": [
     {
-      "input": "Drag / Swipe",
+      "input": "Swipe / Drag",
       "action": "Slice through cubes"
     },
     {
-      "input": "Click / Tap",
+      "input": "Tap / Click",
       "action": "Choose menu options"
     },
     {
-      "input": "P",
+      "input": "Pause button / P / Esc",
       "action": "Pause / resume"
     }
   ],
   "tips": [
-    "Slice fast: slow drags do not count as hits, so use quick, decisive swipes.",
+    "Slice fast: slow drags only nudge a cube, so use quick, decisive swipes.",
     "Pink armored cubes take three hits, so keep swiping through them until they shatter.",
     "During slow-mo, keep your finger or mouse button down to slow time even further.",
     "Watch the edges of the screen, where cubes are easy to miss when several appear at once."
@@ -31,7 +31,7 @@
     },
     {
       "question": "Can I play Cube Ninja on a phone or tablet?",
-      "answer": "Yes. Just swipe across the cubes with your finger; the game adapts to the size of your screen."
+      "answer": "Yes. Just swipe across the cubes with your finger. The game fills the screen in portrait and landscape and pauses automatically if you switch apps."
     },
     {
       "question": "What is the difference between Play Game and Casual Mode?",
